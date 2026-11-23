@@ -92,7 +92,7 @@ No Windows, caso o comando `python` não seja reconhecido, use `py -m pip instal
 ### Integrantes da Equipe
 
 - Eric Santos — 2026.15.292
-- Mateus Andrade — 2026.15.208
+- Mateus Monteiro — 2026.15.208
 - Diogo Gouvêa — 2026.15.1431
 - Fábio Silveira — 2026.15.3
 - Yuri Bering — 2026.15.128
