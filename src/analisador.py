@@ -28,13 +28,14 @@ class AnalisadorNetflix:
             generos.append(genero.split(",")[0].strip())
         self.__dados["genero_principal"] = generos
 
-        # O ano aparece nos quatro últimos caracteres da data.
+        # valor em texto/remove espaços/pega ultimos 4 para numeros
         anos = []
         for data in self.__dados["date_added"].fillna(""):
             anos.append(str(data).strip()[-4:])
         self.__dados["ano_adicao"] = pd.to_numeric(anos, errors="coerce")
 
-        # Somente durações em minutos entram nas análises de filmes.
+        # filme = minutos "90 min" / serie = temporadas "1" ou "2" [-4:] (pega) e [:-4] (retira)
+        # else none para separa duração e temporada
         minutos = []
         for duracao in self.__dados["duration"].fillna(""):
             if duracao.endswith(" min"):
@@ -43,10 +44,14 @@ class AnalisadorNetflix:
                 minutos.append(None)
         self.__dados["duracao_minutos"] = pd.to_numeric(minutos, errors="coerce")
 
+        #Type = serie e com_pais = contagem != diferente de
     def resumo_geral(self):
         series = self.__dados[self.__dados["type"] == "TV Show"]
         com_pais = self.__dados[self.__dados["pais_principal"] != "Não informado"]
 
+      #unique = cada pais uma unica vez  len = quantos sobraram
+      #maior ano e menor ano
+      #mean  media e round arredonda
         print("Total de títulos:", len(self.__dados))
         print("Quantidade de filmes:", len(self.__filmes))
         print("Quantidade de séries:", len(series))
@@ -57,23 +62,27 @@ class AnalisadorNetflix:
         print("Duração média dos filmes (min):", round(self.__filmes["duracao_minutos"].mean(), 1))
         print("Títulos com data de adição:", self.__dados["ano_adicao"].count())
 
+      #size conta as linhas de cada grrupo
     def contagem_por_tipo(self):
         contagem = self.__dados.groupby("type").size()
         print("Filmes:", contagem.get("Movie", 0))
         print("Séries:", contagem.get("TV Show", 0))
 
+     #seleciona/organiza + e -/ pega os 10 primeiros/ contagem guarda junto com qtd
     def top_generos(self):
         contagem = self.__dados["genero_principal"].value_counts().head(10)
         for genero in contagem.index:
             print(f"{genero}: {contagem[genero]}")
 
+    #remove espaços/transforma em minusculo/ vazio
     def buscar_titulo(self, titulo):
         """Mostra até 20 títulos que contêm o texto digitado."""
         titulo = titulo.strip().lower()
         if not titulo:
             print("Digite um título para buscar.")
             return
-
+   
+    #uma linha por vez/ i=linha atual/pandas transforma em minúsculo e segue
         encontrados = 0
         for i in self.__dados.index:
             nome = self.__dados.loc[i, "title"]
@@ -92,19 +101,24 @@ class AnalisadorNetflix:
         if encontrados == 0:
             print("Título não encontrado.")
 
+
+     #rremover espaços/transforma em minusculo/ vazio/loc = localiza e retorna o valor 
     def titulos_do_pais(self, pais):
-        """Mostra até 15 títulos recentes do país principal informado."""
         pais = pais.strip().lower()
+
+        #linhas que correspondem ao pais.le a linha, compara e guarda
         encontrados = []
         for i in self.__dados.index:
             if self.__dados.loc[i, "pais_principal"].lower() == pais:
                 encontrados.append(i)
 
+        #recupera/orrganiza/ano. len conta todos os titulos e mostra o total
         titulos = self.__dados.loc[encontrados].sort_values(
             "release_year", ascending=False
         )
         print(f"Total encontrado: {len(titulos)}")
 
+       #15 recentes, se tiver menos de 15 mostra todos
         for i in titulos.head(15).index:
             nome = titulos.loc[i, "title"]
             tipo = titulos.loc[i, "type"]
@@ -112,6 +126,9 @@ class AnalisadorNetflix:
             pais_titulo = titulos.loc[i, "country"]
             print(f"{nome} | {tipo} | {ano} | {pais_titulo}")
 
+
+
+#groupby reune/conta quantos titulos
     def grafico_linha_titulos_por_ano(self):
         contagem = self.__dados.groupby("ano_adicao").size()
 
@@ -122,10 +139,11 @@ class AnalisadorNetflix:
         plt.ylabel("Quantidade de títulos")
         plt.show()
 
+#top 10 paises com mais titulosq/remove os que nao tem pais/conta e pega os 10 primeiros
     def grafico_barras_top_paises(self):
         com_pais = self.__dados[self.__dados["pais_principal"] != "Não informado"]
 
-        # A ordenação coloca a maior barra no topo.
+        
         dez_paises = com_pais["pais_principal"].value_counts().head(10).sort_values()
 
         plt.figure(figsize=(10, 5))
@@ -136,6 +154,7 @@ class AnalisadorNetflix:
         plt.tight_layout()
         plt.show()
 
+    #qual rating mais frequente/conta e organiza/mostra em grafico de barras
     def grafico_barras_classificacao(self):
         contagem = self.__dados["rating"].value_counts()
 
@@ -148,6 +167,7 @@ class AnalisadorNetflix:
         plt.tight_layout()
         plt.show()
 
+    #seleciona apenas os filmes/pega coluna de duracao e remove os nulos/mostra em histograma
     def grafico_histograma_duracao(self):
         plt.figure(figsize=(10, 5))
         plt.hist(self.__filmes["duracao_minutos"].dropna(), bins=25)
@@ -156,6 +176,7 @@ class AnalisadorNetflix:
         plt.ylabel("Quantidade de filmes")
         plt.show()
 
+    #grafico de dispersão/seleciona apenas os filmes/ano de lançamento x duração dos filmes
     def grafico_dispersao_ano_duracao(self):
         plt.figure(figsize=(10, 5))
         sns.scatterplot(
